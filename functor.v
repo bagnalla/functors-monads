@@ -314,13 +314,6 @@ Proof.
 Qed.
 
 
-(* The state functor is the composition of the reader and flipped prod
-   functor (an adjoint pair).
-   state S X = X -> S*X
- *)
-Definition state S := reader S ∘ flip prod S.
-
-
 (** flip prod is left adjoint to reader.
     I.e., flip prod S  -| reader S
     
