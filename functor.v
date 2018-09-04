@@ -4,22 +4,25 @@ Require Import Coq.Logic.FunctionalExtensionality.
 
 Open Scope program_scope.
 
-(** This file contains class definitions for functors and monads with
-some basic instances for things like pairs and lists, mostly in
-Haskell style (we work only in the category of types, so all functors
-are endofunctors). *)
+(** This file contains class definitions for functors with some basic
+    instances for things like pairs and lists, mostly in Haskell style
+    (we work only in the category of types, so all functors are
+    endofunctors). *)
 
 (* In this version, we just assume function extensionality which makes
-things WAY simpler since we don't have to deal with equivalence
-relations and proper instances and all that.
+   things WAY simpler since we don't have to deal with equivalence
+   relations and proper instances and all that. *)
 
-Anyway, the idea is to formalize composition of functors and the
-construction of monads from adjunctions. Then we can, e.g., show that
-the state monad is defined by the adjunction of the product and reader
-(I think) functors. *)
 
 Notation "f $ x" := (apply f x) (at level 100) : functor_scope.
 Open Scope functor_scope.
+
+Definition curry {A B C} (f : A -> B -> C) (p : A*B) : C :=
+  f (fst p) (snd p).
+
+Definition uncurry {A B C} (f : A*B -> C) (x : A) (y : B) : C :=
+  f (x, y).
+
 
 (** Covariant functors *)
 Class Fmap (F : Type -> Type) : Type :=
@@ -142,6 +145,99 @@ Proof.
     rewrite fmap_comp0, fmap_comp1; auto.
 Qed.
 
+(* I would think that Typeclasses Transparent would do this.. but we
+   add these synonym instances so they can be found during
+   resolution. *)
+Instance Fmap_compose' F G `{Fmap F} `{fG : Fmap G}
+  : Fmap (fun X => G (F X)) := Fmap_compose F G.
+Instance Functor_compose' F G `{Functor F} `{Functor G}
+  : Functor (fun X => G (F X)) := Functor_compose F G.
+
+
+(** The identity functor. *)
+Instance Fmap_id : Fmap id := fun _ _  => id.
+
+Instance Functor_id : Functor id.
+Proof. firstorder. Qed.
+
+Instance Fmap_id' : Fmap (fun X => X) := Fmap_id.
+Instance Functor_id' : Functor (fun X => X) := Functor_id.
+
+
+(** Natural transformations. *)
+
+(* It should be the case that any such α is a natural transformation,
+   but I'm not sure that it's provable... *)
+Definition natural {F G} `{Functor F} `{Functor G}
+           (α : forall X, F X -> G X) :=
+  forall A B (f : A -> B), fmap f ∘ α A = α B ∘ fmap f.
+
+Record natural_transformation
+       (F G : Type -> Type) `{Functor F} `{Functor G} :=
+  { nat_app :> forall A, F A -> G A
+  ; nat_pf : natural nat_app }.
+
+
+(** Adjunctions (in terms of unit and counit). *)
+
+Class AdjunctionUnit (L R : Type -> Type) `{Functor L} `{Functor R}
+  : Type :=
+  adjUnit : forall A, A -> R (L A).
+
+Class AdjunctionCounit (L R : Type -> Type) `{Functor L} `{Functor R}
+  : Type :=
+  adjCounit : forall A, L (R A) -> A.
+
+Notation "'ϵ'" := adjCounit : functor_scope.
+
+(*  fmap η : L A -> L (R (L A))
+    ϵ : L (R (L A)) -> L A
+
+    ϵ ∘ fmap η = id
+
+    η : R A -> R (L (R A))
+    fmap ϵ : R (L (R A)) -> R A 
+
+    fmap ϵ ∘ η = id
+*)
+
+Class Adjunction (L R : Type -> Type) `{Functor L} `{Functor R}
+      {u : AdjunctionUnit L R} {c : AdjunctionCounit L R}
+  : Prop :=
+  { adj_tri1 : forall A, ϵ _ ∘ fmap (adjUnit A) = @id (L A)
+  ; adj_tri2 : forall A, fmap (ϵ _) ∘ (adjUnit (R A)) = @id (R A)
+  ; adj_unit_nat : natural (@adjUnit L R _ _ _ _ _)
+  ; adj_counit_nat : natural (@adjCounit L R _ _ _ _ _) }.
+
+
+(** Adjunctions as isomorphisms of hom-sets. *)
+Class AdjunctionLeft (L R : Type -> Type) `{Functor L} `{Functor R}
+  : Type :=
+  adjLeft : forall {A B}, (L A -> B) -> A -> R B.
+
+Class AdjunctionRight (L R : Type -> Type) `{Functor L} `{Functor R}
+  : Type :=
+  adjRight : forall {A B}, (A -> R B) -> L A -> B.
+
+Definition isomorphic {A B} (f : A -> B) (g : B -> A) :=
+  f ∘ g = id /\ g ∘ f = id.
+
+Class AdjunctionIso (L R : Type -> Type) `{Functor L} `{Functor R}
+      {l : AdjunctionLeft L R} {r : AdjunctionRight L R} : Prop :=
+  { adj_iso : forall A B, isomorphic (l A B) (r A B)
+  (* ; adj_left_nat : natural  *) (* TODO *)
+ }.
+
+
+(** The constant functor. *)
+Instance Fmap_const A : Fmap (const A) := fun _ _ _ => id.
+
+Instance Functor_const A : Functor (const A).
+Proof. firstorder. Qed.
+
+Instance Fmap_const' A : Fmap (fun _ => A) := Fmap_const A.
+Instance Functor_const' A : Functor (fun _ => A) := Functor_const A.
+
 
 (** list is a covariant functor. *)
 Instance Fmap_list : Fmap list := map.
@@ -204,18 +300,48 @@ Instance Profunctor_hom : Profunctor hom.
 Proof. constructor; intros; extensionality x; auto. Qed.
 
 
+(** △ diagonal functor. *)
+Definition diag := fun A => prod A A.
+
+Instance Fmap_diag : Fmap diag :=
+  fun _ _ f => bimap f f.
+
+Instance Functor_diag : Functor diag.
+Proof.
+  constructor; intros.
+  - apply bimap_id.
+  - apply bimap_comp.
+Qed.
+
+
 (* The state functor is the composition of the reader and flipped prod
    functor (an adjoint pair).
    state S X = X -> S*X
  *)
 Definition state S := reader S ∘ flip prod S.
 
-Instance Fmap_state S : Fmap (state S) :=
-  fun _ _ => fmap.
 
-Instance Functor_state S : Functor (state S).
+(** flip prod is left adjoint to reader.
+    I.e., flip prod S  -| reader S
+    
+    L = flip prod S = (-, S)
+    R = reader S = S -> - 
+
+    R ∘ L = reader S ∘ flip prod S = S -> - ∘ (-, S) = S -> (-, S)
+    L ∘ R = flip prod S ∘ reader S = (-, S) ∘ S -> - = (S -> -, S)
+ *)
+
+Instance AdjunctionUnit_prod_reader S
+  : AdjunctionUnit (flip prod S) (reader S) :=
+  fun _ => pair.
+
+Instance AdjunctionCounit_prod_reader S
+  : AdjunctionCounit (flip prod S) (reader S) :=
+  fun _ => curry apply.
+
+Instance Adjunction_prod_reader S
+  : Adjunction (flip prod S) (reader S).
 Proof.
-  constructor; intros; apply Functor_compose;
-    try apply Functor_reader;
-    apply Functor_bifunctor2, Bifunctor_prod.
+  constructor; unfold natural; intros; (firstorder;
+    extensionality x; destruct x; firstorder).
 Qed.

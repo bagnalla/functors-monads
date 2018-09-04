@@ -51,7 +51,7 @@ Definition ap {T : Type -> Type} `{Monad T} {A B}
 
 Notation "f <*> x" := (ap f x) (at level 60) : monad_scope.
 Notation "x *> y" := (flip const x y) (at level 60) : monad_scope.
-Notation "x <* y" := (const x y) (at level 60) : monad_scope.
+(* Notation "x <* y" := (const x y) (at level 60) : monad_scope. *)
 
 
 Definition liftA2 {T : Type -> Type} `{Monad T} {A B C}
@@ -72,12 +72,6 @@ Naturality condition for any α:
 
 G f ∘ α = α ∘ F f
 *)
-
-(* It should be the case that any such α is a natural transformation,
-   but I'm not sure that it's provable... *)
-Definition natural {F G} `{Functor F} `{Functor G}
-           (α : forall X, F X -> G X) :=
-  forall A B (f : A -> B), fmap f ∘ α A = α B ∘ fmap f.
 
 
 (** Monads in terms of return and join. Instances of the other monad
@@ -128,14 +122,14 @@ Class Jmonad (T : Type -> Type) `{Functor T} {r : Return T} {j : Join T}
   ; jmonad_right_id : forall A (m : T A), μ (η <$> m) = m
   ; jmonad_assoc : forall A (m : T (T (T A))), μ (μ m) = μ (μ <$> m)
   ; jmonad_ret_nat : forall A B (f : A -> B), fmap f ∘ η = η ∘ f
-  ; jmonad_bind_nat : forall A B (f : A -> B), fmap f ∘ μ = μ ∘ fmap (fmap f)
-  }.
+  ; jmonad_bind_nat : forall A B (f : A -> B), fmap f ∘ μ = μ ∘ fmap (fmap f) }.
 
 
 (* Construction of Monad instance from JMonad.*)
 Instance Bind_join (T : Type -> Type) `{Functor T} `{Join T} : Bind T :=
   fun _ _ m f => μ (f <$> m).
 
+(* It seems that we need the naturality conditions for this proof. *)
 Instance Monad_Jmonad (T : Type -> Type) `{Jmonad T} : Monad T.
 Proof.
   constructor.
@@ -174,8 +168,7 @@ Proof.
   - apply app_nil_r.
   - unfold fmap, Fmap_list, join, Join_list.
     intros ? l; induction l; auto; simpl; rewrite IHl; auto.
-  - 
-    intros A l. induction l; auto.
+  - intros A l. induction l; auto.
     unfold join, Join_list in *. simpl.
     unfold fmap, Fmap_list in *.
     rewrite <- IHl.
@@ -204,6 +197,7 @@ Proof.
 Qed.
 
 
+(** sum is a Jmonad. *)
 Instance Return_sum A : Return (sum A) :=
   fun _ => inr.
 
@@ -219,14 +213,91 @@ Proof.
   extensionality x. destruct x; auto.
 Qed.
 
+Instance Return_adjunction L R `{u : AdjunctionUnit L R}
+  : Return (R ∘ L) := u.
 
-Instance Return_state S : Return (state S) :=
-  fun _ s x => (s, x).
+(* This is annoying. *)
+Program Instance Join_adjunction L R `{c : AdjunctionCounit L R}
+  : Join (R ∘ L) :=
+  (* fun A => fmap (@adjCounit L R _ _ _ _ _ (L A)). *)
+  fun A => @fmap _ _ _ (L A) _.
+Next Obligation. unfold compose in X. apply adjCounit in X; auto. Defined.
 
-Instance Join_state S : Join (state S) :=
-  fun _ m s => let (m', s') := m s in m' s'.
-
-Instance Jmonad_state S : Jmonad (state S).
+Instance Jmonad_adjunction L R `{Adjunction L R}
+  : Jmonad (R ∘ L).
 Proof.
-  constructor; firstorder.
-Admitted.
+  constructor.
+  - destruct H1 as [_ Htri]; intros A m; apply (equal_f (Htri _)).
+  - intros A m.
+    unfold join, Join_adjunction, Join_adjunction_obligation_1,
+    fmap, Fmap_compose.
+    pose proof H0 as H2. destruct H2.
+    unfold compose in fmap_comp; unfold compose.
+    match goal with
+    | [ |- fMap0 ?B ?C ?g (fMap0 ?A ?B ?f m) = m ] =>
+      pose proof (fmap_comp A B C f g) as H2
+    end.
+    eapply equal_f in H2; rewrite <- H2.
+    pose proof H1 as H3; destruct H3 as [Htri _].
+    specialize (Htri A).
+    unfold fmap, compose, adjUnit in Htri.
+    unfold fmap, ret, Return_adjunction; rewrite Htri.
+    destruct H; rewrite fmap_id; auto.
+  - intros A m.
+    unfold join, Join_adjunction, Join_adjunction_obligation_1,
+    fmap, Fmap_compose.
+    pose proof H0 as H2; destruct H2; unfold fmap, compose in fmap_comp.
+    match goal with
+    | [ |- fMap0 ?B ?C ?g (fMap0 ?A _ ?f _) = _ ] =>
+      pose proof (fmap_comp A B C f g) as H2
+    end.
+    eapply equal_f in H2; rewrite <- H2; destruct H1.
+    unfold fmap, Fmap_compose', Fmap_compose, Fmap_id', Fmap_id, id, compose
+      in adj_counit_nat.
+    specialize (adj_counit_nat (L (R (L A))) (L A) (ϵ (L A))).
+    assert (H1: (fun x : L (R (L (R (L A)))) =>
+                   ϵ (L A) (ϵ (L (R (L A))) x)) =
+            (fun x : L (R (L (R (L A)))) =>
+               ϵ (L A) (fMap (R (L (R (L A))))
+                             (R (L A)) (fmap (ϵ (L A))) x))).
+    { extensionality x; eapply equal_f in adj_counit_nat;
+        apply adj_counit_nat. }
+    unfold compose; rewrite H1; rewrite fmap_comp; auto.
+  - firstorder.
+  - intros A B f.
+    extensionality x.
+    unfold fmap, Fmap_compose, fmap, join, Join_adjunction,
+    Join_adjunction_obligation_1, fmap, compose.
+    pose proof H0 as H2; destruct H2; unfold fmap, compose in fmap_comp.
+    match goal with
+    | [ |- fMap0 ?B ?C ?g (fMap0 ?A _ ?f _) = _ ] =>
+      pose proof (fmap_comp A B C f g) as H2
+    end.
+    eapply equal_f in H2; rewrite <- H2; destruct H1.
+    unfold natural, fmap, Fmap_compose', Fmap_compose, Fmap_id',
+    Fmap_id, id, compose in adj_counit_nat.
+    specialize (adj_counit_nat _ _ (fMap _ _ f)).
+    rewrite adj_counit_nat; rewrite fmap_comp; auto.
+Qed.
+
+
+(* The state monad from adjunctions (we never explicitly define the
+   state monad instance -- it is derived from the adjunction of the
+   reader and product functors :D). *)
+Definition get {S} : state S S := fun s => (s, s).
+
+Definition put {S} : S -> state S unit := uncurry const tt.
+
+Definition runState {S A} (m : state S A) (s : S) : A*S := m s.
+
+Definition TestM A := state nat A.
+(* Hmm.. it doesn't resolve the instance properly when we use a type
+synonym like this. *)
+
+(* Definition test : TestM bool := *)
+Definition test : state nat bool :=
+  ret false >> get >>= fun s => if Nat.even s then ret true else ret false.
+
+Definition result := fst (runState test 0).
+
+Eval compute in result.
