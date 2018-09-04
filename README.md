@@ -1,6 +1,6 @@
 # functors-monads
 
-Simple **functors** and **monads from adjunctions**.
+**Functors** and **monads from adjunctions**.
 
 * functor.v - functor and adjunction classes and some basic instances.
 
