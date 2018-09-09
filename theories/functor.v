@@ -2,15 +2,6 @@ Require Import Coq.Program.Basics.
 
 Open Scope program_scope.
 
-(** This file contains class definitions for functors with some basic
-    instances for things like pairs and lists, mostly in Haskell style
-    (we work only in the category of types, so all functors are
-    endofunctors). *)
-
-(* In this version, we just assume function extensionality which makes
-   things WAY simpler since we don't have to deal with equivalence
-   relations and proper instances and all that. *)
-
 
 Notation "f $ x" := (apply f x) (at level 100) : functor_scope.
 Open Scope functor_scope.
