@@ -2,7 +2,7 @@ Require Import Coq.Program.Basics.
 Require Import List.
 Require Import Coq.Logic.FunctionalExtensionality.
 
-Require Import functor.
+Require Import adjunction functor identity.
 
 Open Scope program_scope.
 Open Scope functor_scope.
@@ -12,25 +12,26 @@ Open Scope functor_scope.
 Class Return (T : Type -> Type) : Type :=
   ret : forall {A}, A -> T A.
 
-Notation "'η'" := ret : monad_scope.
-Open Scope monad_scope.
+(* Notation "'η'" := ret : monad_scope. *)
+(* Open Scope monad_scope. *)
 
 Class Bind (T : Type -> Type) : Type :=
   bind : forall {A B}, T A -> (A -> T B) -> T B.
 
-Notation "f >>= g" := (bind f g) (at level 60) : monad_scope.
-Notation "f >> g" := (bind f (fun _ => g)) (at level 60) : monad_scope.
 Notation "f =<< g" := (bind g f) (at level 60) : monad_scope.
 Notation "f << g" := (bind g (fun _ => f)) (at level 60) : monad_scope.
+Notation "f >>= g" := (bind f g) (at level 60) : monad_scope.
+Notation "f >> g" := (bind f (fun _ => g)) (at level 60) : monad_scope.
 
 Notation "x <-- f ; m" := (bind f (fun x => m)) 
-  (at level 100, right associativity, only parsing).
+  (at level 100, right associativity, only parsing) : monad_scope.
 
+Open Scope monad_scope.
 
 Class Monad (T : Type -> Type) `{Functor T} {r : Return T} {b : Bind T}
   : Prop :=
-  { monad_left_id : forall A B x (f : A -> T B), η x >>= f = f x
-  ; monad_right_id : forall A (m : T A), m >>= η = m
+  { monad_left_id : forall A B x (f : A -> T B), ret x >>= f = f x
+  ; monad_right_id : forall A (m : T A), m >>= ret = m
   ; monad_assoc : forall A B C (m : T A) (f : A -> T B) (g : B -> T C),
       (m >>= f) >>= g = m >>= (fun x => f x >>= g)
 }.
@@ -118,10 +119,10 @@ I.e.,  T f ∘ μ = μ ∘ T (T f)
          of natural? *)
 Class Jmonad (T : Type -> Type) `{Functor T} {r : Return T} {j : Join T}
   : Prop :=
-  { jmonad_left_id : forall A (m : T A), μ (η m) = m
-  ; jmonad_right_id : forall A (m : T A), μ (η <$> m) = m
+  { jmonad_left_id : forall A (m : T A), μ (ret m) = m
+  ; jmonad_right_id : forall A (m : T A), μ (ret <$> m) = m
   ; jmonad_assoc : forall A (m : T (T (T A))), μ (μ m) = μ (μ <$> m)
-  ; jmonad_ret_nat : forall A B (f : A -> B), fmap f ∘ η = η ∘ f
+  ; jmonad_ret_nat : forall A B (f : A -> B), fmap f ∘ ret = ret ∘ f
   ; jmonad_bind_nat : forall A B (f : A -> B), fmap f ∘ μ = μ ∘ fmap (fmap f) }.
 
 
@@ -155,62 +156,6 @@ Proof.
     unfold compose in H1; rewrite H1.
     pose proof (Hcomp _ _ _ f (fmap g)) as H2.
     rewrite H2; auto.
-Qed.
-
-(** list is a Jmonad. *)
-Instance Return_list : Return list := fun _ x => x :: nil.
-
-Instance Join_list : Join list := concat.
-
-Instance Jmonad_list : Jmonad list.
-Proof.
-  constructor.
-  - apply app_nil_r.
-  - unfold fmap, Fmap_list, join, Join_list.
-    intros ? l; induction l; auto; simpl; rewrite IHl; auto.
-  - intros A l. induction l; auto.
-    unfold join, Join_list in *. simpl.
-    unfold fmap, Fmap_list in *.
-    rewrite <- IHl.
-    apply concat_app.
-  - firstorder.
-  - intros A B f.
-    unfold fmap, Fmap_list, join, Join_list, compose; simpl.
-    extensionality l; induction l; simpl; auto.
-    rewrite <- IHl, map_app; auto.
-Qed.
-
-
-(** option is a Jmonad. *)
-Instance Return_option : Return option := fun _ => Some.
-
-Instance Join_option : Join option :=
-  fun _ x => match x with
-        | Some y => y
-        | None => None
-        end.
-
-Instance Jmonad_option : Jmonad option.
-Proof.
-  constructor; firstorder; try destruct m; auto.
-  extensionality x. destruct x; auto.
-Qed.
-
-
-(** sum is a Jmonad. *)
-Instance Return_sum A : Return (sum A) :=
-  fun _ => inr.
-
-Instance Join_sum A : Join (sum A) :=
-  fun _ s => match s with
-          | inl x => inl x
-          | inr y => y
-          end.
-
-Instance Jmonad_sum A : Jmonad (sum A).
-Proof.
-  constructor; firstorder; try destruct m; auto.
-  extensionality x. destruct x; auto.
 Qed.
 
 Instance Return_adjunction L R `{u : AdjunctionUnit L R}
@@ -279,3 +224,10 @@ Proof.
     specialize (adj_counit_nat _ _ (fMap _ _ f)).
     rewrite adj_counit_nat; rewrite fmap_comp; auto.
 Qed.
+
+
+(** The identity monad. *)
+Instance Return_id : Return id := fun _ => id.
+Instance Join_id : Join id := fun _ => id.
+Instance Jmonad_id : Jmonad id.
+Proof. constructor; firstorder. Qed.

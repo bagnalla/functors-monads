@@ -1,5 +1,15 @@
 -R . functors_monads
 
-functor.v
-monad.v
-state.v
+theories/adjunction.v
+theories/constant.v
+theories/diagonal.v
+theories/functor.v
+theories/hom.v
+theories/identity.v
+theories/list.v
+theories/monad.v
+theories/option.v
+theories/prod.v
+theories/reader.v
+theories/state.v
+theories/sum.v
