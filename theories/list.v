@@ -1,7 +1,7 @@
 Require Import Coq.Program.Basics.
 Require Import FunctionalExtensionality.
 Require Import List.
-Require Import functor monad.
+Require Import functor monad monoid.
 
 (** list is a covariant functor. *)
 Instance Fmap_list : Fmap list := map.
@@ -35,3 +35,15 @@ Proof.
     extensionality l; induction l; simpl; auto.
     rewrite <- IHl, map_app; auto.
 Qed.
+
+
+Instance Mappend_list A : Mappend (list A) := @app _.
+
+Instance Semigroup_list A : Semigroup (list A).
+Proof. constructor; apply app_assoc_reverse. Qed.
+
+
+Instance Mempty_list A : Mempty (list A) := nil.
+
+Instance Monoid_list A : Monoid (list A).
+Proof. constructor; auto; apply app_nil_r. Qed.

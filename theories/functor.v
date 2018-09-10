@@ -6,11 +6,17 @@ Open Scope program_scope.
 Notation "f $ x" := (apply f x) (at level 100) : functor_scope.
 Open Scope functor_scope.
 
-Definition curry {A B C} (f : A -> B -> C) (p : A*B) : C :=
+Definition curry {A B C} (f : A*B -> C) (x : A) (y : B) : C :=
+  f (x, y).
+
+Definition uncurry {A B C} (f : A -> B -> C) (p : A*B) : C :=
   f (fst p) (snd p).
 
-Definition uncurry {A B C} (f : A*B -> C) (x : A) (y : B) : C :=
-  f (x, y).
+Definition eval {A B} : (A -> B) * A -> B :=
+  uncurry apply.
+
+Definition tuple_fun {A B C} (f : A -> B) (g : A -> C) : A -> B*C :=
+  fun x => (f x, g x).
 
 
 (** Covariant functors *)

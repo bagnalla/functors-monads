@@ -1,9 +1,15 @@
+Require Import Coq.Program.Basics.
+Require Import NArith.
 Require Import monad state.
 
+Require Import Extraction.
+Extraction Language OCaml.
+(* Extraction Language Haskell. *)
 
-(* Definition TestM A := state nat A. *)
+
+Definition TestM A := state nat A.
 (* Hmm.. it doesn't resolve the instance properly when we use a type
-synonym like this. *)
+   synonym like this. *)
 
 
 Definition test : state nat bool :=
@@ -21,8 +27,8 @@ Proof.
   rewrite monad_left_id; auto.
 Qed.
 
-Definition result := fst (runState test 0).
-Eval compute in result.
+Definition test_result := fst (runState test 0).
+Eval compute in test_result.
 
 
 Definition add1 : state nat unit :=
@@ -37,13 +43,16 @@ Eval compute in add1_result.
 Lemma add1_test_spec n :
   evalState add1_test n = S n.
 Proof.
-  unfold evalState; simpl.
+  unfold evalState, Basics.compose; simpl.
   rewrite PeanoNat.Nat.add_comm; auto.
 Qed.
 
 Definition addn : nat -> state nat unit :=
-  fun n => modify (fun m => m + n).
+  modify ∘ Nat.add.
 
 Lemma addn_spec n m :
   execState (addn m) n = n + m.
-Proof. firstorder. Qed.
+Proof. cbv delta; simpl; firstorder. Qed.
+
+
+Extraction "extract/test_result" test_result.

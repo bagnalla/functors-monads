@@ -8,3 +8,6 @@ Instance Bimap_prod : Bimap prod :=
 
 Instance Bifunctor_prod : Bifunctor prod.
 Proof. constructor; intros; extensionality x; destruct x; auto. Qed.
+
+Definition swap {A B} : prod A B -> prod B A :=
+  fun p => (snd p, fst p).

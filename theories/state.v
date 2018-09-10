@@ -16,23 +16,16 @@ Definition state S := reader S ∘ flip prod S.
 Instance Monad_state S : Monad (state S) := _.
 
 
-Definition get {S} : state S S := fun s => (s, s).
+Definition get {S} : state S S := tuple_fun id id.
 
-Definition gets {S A} : (S -> A) -> state S A :=
-  (* fun f s => (f s, s). *)
-  fun f => get >>= ret ∘ f.
-  (* bind get ∘ compose ret. *)
+Definition gets {S A} : (S -> A) -> state S A := bind get ∘ compose ret.
 
-Definition put {S} : S -> state S unit := uncurry const tt.
+Definition put {S} : S -> state S unit := curry const tt.
 
-Definition modify {S} : (S -> S) -> state S unit :=
-  (* fun f s => (tt, f s). *)
-  fun f => get >>= put ∘ f.
-  (* bind get ∘ compose put. *)
+Definition modify {S} : (S -> S) -> state S unit := bind get ∘ compose put.
 
+Definition runState {S A} : state S A -> S -> A*S := apply.
 
-Definition runState {S A} (m : state S A) (s : S) : A*S := m s.
+Definition evalState {S A} : state S A -> S -> A := compose fst ∘ runState.
 
-Definition evalState {S A} (m : state S A) (s : S) : A := fst (m s).
-
-Definition execState {S A} (m : state S A) (s : S) : S := snd (m s).
+Definition execState {S A} : state S A -> S -> S := compose snd ∘ runState.

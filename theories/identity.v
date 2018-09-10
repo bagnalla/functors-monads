@@ -1,4 +1,3 @@
-(* Require Import Coq.Program.Basics. *)
 Require Import functor.
 
 

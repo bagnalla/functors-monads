@@ -1,8 +1,8 @@
 Require Import Coq.Program.Basics.
-Require Import List.
+Require Import Coq.Program.Tactics.
 Require Import Coq.Logic.FunctionalExtensionality.
 
-Require Import adjunction functor identity.
+Require Import adjunction functor identity monoid.
 
 Open Scope program_scope.
 Open Scope functor_scope.
@@ -11,9 +11,6 @@ Open Scope functor_scope.
 (** Monads (return and bind). *)
 Class Return (T : Type -> Type) : Type :=
   ret : forall {A}, A -> T A.
-
-(* Notation "'η'" := ret : monad_scope. *)
-(* Open Scope monad_scope. *)
 
 Class Bind (T : Type -> Type) : Type :=
   bind : forall {A B}, T A -> (A -> T B) -> T B.
@@ -175,7 +172,7 @@ Proof.
   - destruct H1 as [_ Htri]; intros A m; apply (equal_f (Htri _)).
   - intros A m.
     unfold join, Join_adjunction, Join_adjunction_obligation_1,
-    fmap, Fmap_compose.
+    fmap, Fmap_compose', Fmap_compose.
     pose proof H0 as H2. destruct H2.
     unfold compose in fmap_comp; unfold compose.
     match goal with
@@ -211,8 +208,8 @@ Proof.
   - firstorder.
   - intros A B f.
     extensionality x.
-    unfold fmap, Fmap_compose, fmap, join, Join_adjunction,
-    Join_adjunction_obligation_1, fmap, compose.
+    unfold fmap, Fmap_compose', Fmap_compose, fmap, join,
+    Join_adjunction, Join_adjunction_obligation_1, fmap, compose.
     pose proof H0 as H2; destruct H2; unfold fmap, compose in fmap_comp.
     match goal with
     | [ |- fMap0 ?B ?C ?g (fMap0 ?A _ ?f _) = _ ] =>

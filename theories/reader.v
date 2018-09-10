@@ -18,17 +18,34 @@ Proof. firstorder. Qed.
 Instance Return_reader R : Return (reader R) :=
   fun _ => const.
 
-Instance Join_reader R : Join (reader R) :=
-  fun _ f r => f r r.
-
 (*
   reader R (reader R A) -> reader R A
 
   (R -> R -> A) -> R -> A
 *)
 
+Instance Join_reader R : Join (reader R) :=
+  fun _ f r => f r r.
+
 Instance Jmonad_reader R : Jmonad (reader R).
 Proof. constructor; firstorder. Qed.
+
+
+
+Definition ask {R} : reader R R := id.
+
+Definition asks {R A} : (R -> A) -> reader R A := compose ask.
+
+Definition local {R A} : (R -> R) -> reader R A -> reader R A :=
+  flip compose.
+
+Definition runReader {R A} : reader R A -> R -> A := apply.
+
+Definition mapReader {R A B} : (A -> B) -> reader R A -> reader R B :=
+  compose.
+
+Definition withReader {R R' A} : (R' -> R) -> reader R A -> reader R' A :=
+  flip compose.
 
 
 (** flip prod is left adjoint to reader.
@@ -47,7 +64,7 @@ Instance AdjunctionUnit_prod_reader S
 
 Instance AdjunctionCounit_prod_reader S
   : AdjunctionCounit (flip prod S) (reader S) :=
-  fun _ => curry apply.
+  fun _ => eval.
 
 Instance Adjunction_prod_reader S
   : Adjunction (flip prod S) (reader S).
