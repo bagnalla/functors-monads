@@ -15,7 +15,7 @@ respective files under the theories directory.
 In the end we get the state monad without ever defining it explicitly
 :D (from the adjunction of the reader and product functors).
 
-NOTE: this library assumes functional extensionality.
+NOTE: this library assumes function extensionality.
 
 test.v contains a few small example state monad programs and proofs
 about them.

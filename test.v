@@ -20,12 +20,20 @@ Definition test' : state nat bool :=
   put 123 >> get >>=
       fun s => if Nat.even s then ret true else ret false.
 
+Definition test'' : state nat bool :=
+  put 123;;
+  s <-- get;
+  if Nat.even s then ret true else ret false.
+
 Lemma test_test'_eq : test = test'.
 Proof.
   unfold test, test'.
   destruct (Monad_state nat).
   rewrite monad_left_id; auto.
 Qed.
+
+Lemma test_test''_eq : test = test''.
+Proof. firstorder. Qed.
 
 Definition test_result := fst (runState test 0).
 Eval compute in test_result.
@@ -55,4 +63,4 @@ Lemma addn_spec n m :
 Proof. cbv delta; simpl; firstorder. Qed.
 
 
-Extraction "extract/test_result" test_result.
+(* Extraction "extract/test_result" test_result. *)

@@ -8,6 +8,7 @@ theories/hom.v
 theories/identity.v
 theories/list.v
 theories/monad.v
+theories/monadtransformer.v
 theories/monoid.v
 theories/option.v
 theories/prod.v

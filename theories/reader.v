@@ -31,7 +31,6 @@ Instance Jmonad_reader R : Jmonad (reader R).
 Proof. constructor; firstorder. Qed.
 
 
-
 Definition ask {R} : reader R R := id.
 
 Definition asks {R A} : (R -> A) -> reader R A := compose ask.
@@ -69,6 +68,6 @@ Instance AdjunctionCounit_prod_reader S
 Instance Adjunction_prod_reader S
   : Adjunction (flip prod S) (reader S).
 Proof.
-  constructor; unfold natural; intros; (firstorder;
-    extensionality x; destruct x; firstorder).
+  constructor; unfold natural; intros; firstorder;
+    extensionality x; destruct x; firstorder.
 Qed.

@@ -22,6 +22,8 @@ Notation "f >> g" := (bind f (fun _ => g)) (at level 60) : monad_scope.
 
 Notation "x <-- f ; m" := (bind f (fun x => m)) 
   (at level 100, right associativity, only parsing) : monad_scope.
+Notation "f ;; m" := (bind f (fun _ => m)) 
+  (at level 100, right associativity, only parsing) : monad_scope.
 
 Open Scope monad_scope.
 
@@ -165,8 +167,7 @@ Program Instance Join_adjunction L R `{c : AdjunctionCounit L R}
   fun A => @fmap _ _ _ (L A) _.
 Next Obligation. unfold compose in X. apply adjCounit in X; auto. Defined.
 
-Instance Jmonad_adjunction L R `{Adjunction L R}
-  : Jmonad (R ∘ L).
+Instance Jmonad_adjunction L R `{Adjunction L R} : Jmonad (R ∘ L).
 Proof.
   constructor.
   - destruct H1 as [_ Htri]; intros A m; apply (equal_f (Htri _)).

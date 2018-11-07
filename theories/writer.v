@@ -42,10 +42,10 @@ Qed.
 Definition tell {W} : W -> writer W unit := flip pair tt.
 
 Definition listen {W A} : writer W A -> writer W (A*W) :=
-  tuple_fun fst swap.
+  fst △ swap.
 
 Definition pass {W A} : writer W (A * (W -> W)) -> writer W A :=
-  tuple_fun (eval ∘ tuple_fun (snd ∘ snd) fst) (fst ∘ snd).
+  eval ∘ ((snd ∘ snd) △ fst) △ fst ∘ snd.
 
 Definition listens {W A B} : (W -> B) -> writer W A -> writer W (A*B) :=
   tuple_fun fst ∘ tuple_fun snd ∘ flip compose fst.

@@ -16,7 +16,7 @@ Definition state S := reader S ∘ flip prod S.
 Instance Monad_state S : Monad (state S) := _.
 
 
-Definition get {S} : state S S := tuple_fun id id.
+Definition get {S} : state S S := id △ id.
 
 Definition gets {S A} : (S -> A) -> state S A := bind get ∘ compose ret.
 

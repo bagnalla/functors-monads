@@ -18,6 +18,8 @@ Definition eval {A B} : (A -> B) * A -> B :=
 Definition tuple_fun {A B C} (f : A -> B) (g : A -> C) : A -> B*C :=
   fun x => (f x, g x).
 
+Notation "f △ g" := (tuple_fun f g) (at level 60) : functor_scope.
+
 
 (** Covariant functors *)
 Class Fmap (F : Type -> Type) : Type :=
