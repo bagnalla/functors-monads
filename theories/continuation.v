@@ -1,6 +1,7 @@
 Require Import Coq.Program.Basics.
 Require Import FunctionalExtensionality.
-Require Import functor monad.
+Require Export functor.
+Require Import monad.
 
 Definition cont R A := (A -> R) -> R.
 

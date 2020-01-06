@@ -1,6 +1,7 @@
 Require Import Coq.Program.Basics.
 Require Import FunctionalExtensionality.
-Require Import adjunction functor monad prod.
+Require Export functor.
+Require Import monad monadtransformer prod.
 
 
 (** The reader functor is covariant. *)
@@ -47,27 +48,29 @@ Definition withReader {R R' A} : (R' -> R) -> reader R A -> reader R' A :=
   flip compose.
 
 
-(** flip prod is left adjoint to reader.
-    I.e., flip prod S -| reader S
-    
-    L = flip prod S = (-, S)
-    R = reader S = S -> - 
+(** reader monad transformer. *)
+Definition readerT R (T : Type -> Type) : Type -> Type := reader R ∘ T.
 
-    R ∘ L = reader S ∘ flip prod S = S -> - ∘ (-, S) = S -> (-, S)
-    L ∘ R = flip prod S ∘ reader S = (-, S) ∘ S -> - = (S -> -, S)
- *)
+(* Instance Fmap_readerT R (T : Type -> Type) `{Fmap T} : Fmap (readerT R T) := *)
+(*   fun _ _ f g r => fmap f (g r). *)
 
-Instance AdjunctionUnit_prod_reader S
-  : AdjunctionUnit (flip prod S) (reader S) :=
-  fun _ => pair.
+(* Instance Functor_readerT R (T : Type -> Type) `{Functor T} *)
+(*   : Functor (readerT R T). *)
+(* Proof. *)
+(*   constructor. *)
+(*   - intros A; unfold fmap, Fmap_readerT, fmap. *)
+(*     destruct H; rewrite fmap_id; auto. *)
+(*   - intros A B C f g. destruct H. *)
+(*     unfold fmap, Fmap_readerT, fmap, compose. *)
+(*     unfold compose in fmap_comp. *)
+(*     (* TODO: is this possible without funext? *) *)
+(*     extensionality x. extensionality r. *)
+(*     rewrite fmap_comp; auto. *)
+(* Qed. *)
 
-Instance AdjunctionCounit_prod_reader S
-  : AdjunctionCounit (flip prod S) (reader S) :=
-  fun _ => eval.
+Instance TransReturn_readerT R : TransReturn (readerT R) :=
+  fun M _ _ _ _ _ _ x => const (ret x).
 
-Instance Adjunction_prod_reader S
-  : Adjunction (flip prod S) (reader S).
-Proof.
-  constructor; unfold natural; intros; firstorder;
-    extensionality x; destruct x; firstorder.
-Qed.
+Instance TransBind_readerT R : TransBind (readerT R) :=
+  fun M _ _ _ _ _ _ _ m f r => m r >>= fun x => f x r.
+

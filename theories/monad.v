@@ -1,11 +1,16 @@
 Require Import Coq.Program.Basics.
 Require Import Coq.Program.Tactics.
-Require Import Coq.Logic.FunctionalExtensionality.
+(* Require Import Coq.Logic.FunctionalExtensionality. *)
 
-Require Import adjunction functor identity monoid.
+Require Export functor.
+Require Import identity.
 
 Open Scope program_scope.
 Open Scope functor_scope.
+
+Lemma equal_f : forall {A B : Type} {f g : A -> B},
+  f = g -> forall x, f x = g x.
+Proof. intros; rewrite H; auto. Qed.
 
 
 (** Monads (return and bind). *)
@@ -157,72 +162,21 @@ Proof.
     rewrite H2; auto.
 Qed.
 
-Instance Return_adjunction L R `{u : AdjunctionUnit L R}
-  : Return (R ∘ L) := u.
+(* Construction of JMonad instance from Monad.*)
+(* Instance Join_bind (T : Type -> Type) `{Functor T} `{Bind T} : Join T := *)
+(*   fun _ m => bind m id. *)
 
-(* This is annoying. *)
-Program Instance Join_adjunction L R `{c : AdjunctionCounit L R}
-  : Join (R ∘ L) :=
-  (* fun A => fmap (@adjCounit L R _ _ _ _ _ (L A)). *)
-  fun A => @fmap _ _ _ (L A) _.
-Next Obligation. unfold compose in X. apply adjCounit in X; auto. Defined.
+(* Instance Jmonad_Monad (T : Type -> Type) `{Monad T} : Jmonad T. *)
+(* Proof. *)
+(*   constructor. *)
+(*   - intros A m; unfold join, Join_bind; destruct H0; rewrite monad_left_id0; easy. *)
+(*   - intros A m. unfold join, Join_bind. destruct H0. *)
+(*     destruct H.  *)
+(*     assert (forall x, ret x >>= id *)
+(*     destruct r. *)
 
-Instance Jmonad_adjunction L R `{Adjunction L R} : Jmonad (R ∘ L).
-Proof.
-  constructor.
-  - destruct H1 as [_ Htri]; intros A m; apply (equal_f (Htri _)).
-  - intros A m.
-    unfold join, Join_adjunction, Join_adjunction_obligation_1,
-    fmap, Fmap_compose', Fmap_compose.
-    pose proof H0 as H2. destruct H2.
-    unfold compose in fmap_comp; unfold compose.
-    match goal with
-    | [ |- fMap0 ?B ?C ?g (fMap0 ?A ?B ?f m) = m ] =>
-      pose proof (fmap_comp A B C f g) as H2
-    end.
-    eapply equal_f in H2; rewrite <- H2.
-    pose proof H1 as H3; destruct H3 as [Htri _].
-    specialize (Htri A).
-    unfold fmap, compose, adjUnit in Htri.
-    unfold fmap, ret, Return_adjunction; rewrite Htri.
-    destruct H; rewrite fmap_id; auto.
-  - intros A m.
-    unfold join, Join_adjunction, Join_adjunction_obligation_1,
-    fmap, Fmap_compose.
-    pose proof H0 as H2; destruct H2; unfold fmap, compose in fmap_comp.
-    match goal with
-    | [ |- fMap0 ?B ?C ?g (fMap0 ?A _ ?f _) = _ ] =>
-      pose proof (fmap_comp A B C f g) as H2
-    end.
-    eapply equal_f in H2; rewrite <- H2; destruct H1.
-    unfold fmap, Fmap_compose', Fmap_compose, Fmap_id', Fmap_id, id, compose
-      in adj_counit_nat.
-    specialize (adj_counit_nat (L (R (L A))) (L A) (ϵ (L A))).
-    assert (H1: (fun x : L (R (L (R (L A)))) =>
-                   ϵ (L A) (ϵ (L (R (L A))) x)) =
-            (fun x : L (R (L (R (L A)))) =>
-               ϵ (L A) (fMap (R (L (R (L A))))
-                             (R (L A)) (fmap (ϵ (L A))) x))).
-    { extensionality x; eapply equal_f in adj_counit_nat;
-        apply adj_counit_nat. }
-    unfold compose; rewrite H1; rewrite fmap_comp; auto.
-  - firstorder.
-  - intros A B f.
-    extensionality x.
-    unfold fmap, Fmap_compose', Fmap_compose, fmap, join,
-    Join_adjunction, Join_adjunction_obligation_1, fmap, compose.
-    pose proof H0 as H2; destruct H2; unfold fmap, compose in fmap_comp.
-    match goal with
-    | [ |- fMap0 ?B ?C ?g (fMap0 ?A _ ?f _) = _ ] =>
-      pose proof (fmap_comp A B C f g) as H2
-    end.
-    eapply equal_f in H2; rewrite <- H2; destruct H1.
-    unfold natural, fmap, Fmap_compose', Fmap_compose, Fmap_id',
-    Fmap_id, id, compose in adj_counit_nat.
-    specialize (adj_counit_nat _ _ (fMap _ _ f)).
-    rewrite adj_counit_nat; rewrite fmap_comp; auto.
-Qed.
-
+(* unfold ret. unfold fmap. *)
+(* Admitted. *)
 
 (** The identity monad. *)
 Instance Return_id : Return id := fun _ => id.

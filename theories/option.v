@@ -1,6 +1,7 @@
 Require Import Coq.Program.Basics.
 Require Import FunctionalExtensionality.
-Require Import functor monad monadtransformer.
+Require Export functor.
+Require Import monad monadtransformer.
 
 
 (** option is a covariant functor. *)
@@ -33,52 +34,52 @@ Qed.
 (** option monad transformer. *)
 Definition optionT (T : Type -> Type) : Type -> Type := T ∘ option.
 
-Instance Fmap_optionT (T : Type -> Type) `{Fmap T} : Fmap (optionT T) :=
-  fun _ _ => fmap.
+(* Instance Fmap_optionT (T : Type -> Type) `{Fmap T} : Fmap (optionT T) := *)
+(*   fun _ _ => fmap. *)
 
-Instance Functor_optionT (T : Type -> Type) `{Functor T}
-  : Functor (optionT T).
-Proof.
-  constructor.
-  - intros A. unfold fmap, Fmap_optionT.
-    unfold fmap, Fmap_compose, fmap, Fmap_option, compose, id.
-    assert ((fun x : option A => match x with
-                              | Some y => Some y
-                              | None => None end) = id).
-    { extensionality x. destruct x; auto. }
-    rewrite H0. destruct H. apply fmap_id.
-  - intros A B C f g.
-    extensionality x.
-    unfold fmap, Fmap_optionT.
-    unfold fmap, Fmap_compose.
-    unfold fmap, Fmap_option.
-    destruct H.
-    unfold fmap, compose in *.
+(* Instance Functor_optionT (T : Type -> Type) `{Functor T} *)
+(*   : Functor (optionT T). *)
+(* Proof. *)
+(*   constructor. *)
+(*   - intros A. unfold fmap, Fmap_optionT. *)
+(*     unfold fmap, Fmap_compose, fmap, Fmap_option, compose, id. *)
+(*     assert ((fun x : option A => match x with *)
+(*                               | Some y => Some y *)
+(*                               | None => None end) = id). *)
+(*     { extensionality x. destruct x; auto. } *)
+(*     rewrite H0. destruct H. apply fmap_id. *)
+(*   - intros A B C f g. *)
+(*     extensionality x. *)
+(*     unfold fmap, Fmap_optionT. *)
+(*     unfold fmap, Fmap_compose. *)
+(*     unfold fmap, Fmap_option. *)
+(*     destruct H. *)
+(*     unfold fmap, compose in *. *)
 
-    specialize (fmap_comp (option A) (option B) (option C) (fmap f) (fmap g)).
-    unfold fmap, Fmap_option in fmap_comp.
-    assert ((fun x : option A =>
-                 match
-                   match x with
-                   | Some y => Some (f y)
-                   | None => None
-                   end
-                 with
-                 | Some y => Some (g y)
-                 | None => None
-                 end) = fmap (g ∘ f)).
-    { extensionality y. destruct y; auto. }
-    rewrite H in fmap_comp.
-    unfold compose in fmap_comp.
-    unfold fmap, Fmap_option in fmap_comp.
-    rewrite fmap_comp; auto.
-Qed.
+(*     specialize (fmap_comp (option A) (option B) (option C) (fmap f) (fmap g)). *)
+(*     unfold fmap, Fmap_option in fmap_comp. *)
+(*     assert ((fun x : option A => *)
+(*                  match *)
+(*                    match x with *)
+(*                    | Some y => Some (f y) *)
+(*                    | None => None *)
+(*                    end *)
+(*                  with *)
+(*                  | Some y => Some (g y) *)
+(*                  | None => None *)
+(*                  end) = fmap (g ∘ f)). *)
+(*     { extensionality y. destruct y; auto. } *)
+(*     rewrite H in fmap_comp. *)
+(*     unfold compose in fmap_comp. *)
+(*     unfold fmap, Fmap_option in fmap_comp. *)
+(*     rewrite fmap_comp; auto. *)
+(* Qed. *)
 
 Instance TransReturn_optionT : TransReturn optionT :=
   fun M _ _ _ _ _ _ => ret ∘ Some.
 
-Instance Return_optionT (T : Type -> Type) `{Return T}
-  : Return (optionT T) := fun _ => ret ∘ Some.
+(* Instance Return_optionT (T : Type -> Type) `{Return T} *)
+(*   : Return (optionT T) := fun _ => ret ∘ Some. *)
 
 Instance TransBind_optionT : TransBind optionT :=
   fun M _ _ _ _ _ _ _ m f =>
@@ -110,7 +111,7 @@ Proof.
     unfold bind, transBind, TransBind_optionT.
     destruct Hmonad. unfold bind in *.
     pose proof (monad_right_id (option A) m) as H0.
-    unfold ret in *; unfold Return_optionT, ret.
+    unfold ret in *; unfold transRet, TransReturn_optionT, ret.
     assert ((fun x : option A =>
      match x with
      | Some x' => (Hret (option A) ∘ Some) x'

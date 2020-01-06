@@ -1,5 +1,5 @@
 Require Import FunctionalExtensionality.
-Require Import functor.
+Require Export functor.
 
 
 (** prod is a covariant bifunctor. *)

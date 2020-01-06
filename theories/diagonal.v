@@ -1,4 +1,5 @@
-Require Import functor prod.
+Require Export functor.
+Require Import prod.
 
 
 (** △ diagonal functor. *)

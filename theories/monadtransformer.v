@@ -1,6 +1,7 @@
 Require Import Coq.Program.Basics.
 
-Require Import functor monad.
+Require Export functor.
+Require Import monad.
 
 Open Scope program_scope.
 Open Scope functor_scope.

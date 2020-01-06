@@ -1,18 +1,35 @@
 Require Import Coq.Program.Basics.
-Require Import functor monad reader.
+Require Export functor.
+Require Import monad reader.
 
 
 (** The state functor is the composition of the reader and flipped
     prod functor (an adjoint pair).
 
-    state S X = X -> S*X
+    state S X = X -> X*S
 *)
 Definition state S := reader S ∘ flip prod S.
 
+(* Definition state S X := S -> S*X. *)
 
-(** The state monad instance is derived automatically. We state it
-    explicitly here so we can easily access proofs about state monads
-    by destructing Monad_state. *)
+
+(** The state monad. *)
+
+Instance Return_state S : Return (state S) :=
+  fun _ => pair.
+
+Instance Join_state S : Join (state S) :=
+  (* fun _ f r => let (g, s') := f r in g s'. *)
+  fun _ => compose (uncurry apply) ∘ apply.
+
+Instance Jmonad_state S : Jmonad (state S).
+Proof.
+  constructor; try solve [firstorder].
+  - admit.
+  - admit.
+  - admit.
+Admitted.
+
 Instance Monad_state S : Monad (state S) := _.
 
 

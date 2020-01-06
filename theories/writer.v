@@ -1,6 +1,7 @@
 Require Import Coq.Program.Basics.
 Require Import FunctionalExtensionality.
-Require Import functor monad monoid prod.
+Require Export functor.
+Require Import monad monoid prod.
 
 
 (** We can't define a monad instance for prod in general, but we can

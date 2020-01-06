@@ -1,5 +1,6 @@
 Require Import FunctionalExtensionality.
-Require Import functor monad.
+Require Export functor.
+Require Import monad.
 
 
 (** sum is a covariant bifunctor. *)

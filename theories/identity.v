@@ -1,4 +1,4 @@
-Require Import functor.
+Require Export functor.
 
 
 (** The identity functor. *)

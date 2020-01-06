@@ -1,5 +1,5 @@
 Require Import Coq.Program.Basics.
-Require Import functor.
+Require Export functor.
 
 
 (** The constant functor. *)

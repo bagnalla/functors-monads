@@ -1,6 +1,5 @@
 -R . functors_monads
 
-theories/adjunction.v
 theories/constant.v
 theories/diagonal.v
 theories/functor.v
@@ -15,4 +14,5 @@ theories/prod.v
 theories/reader.v
 theories/state.v
 theories/sum.v
+theories/tree.v
 theories/writer.v

@@ -1,4 +1,5 @@
 Require Import Coq.Program.Basics.
+Require Import FunctionalExtensionality.
 
 Open Scope program_scope.
 
@@ -31,6 +32,16 @@ Class Functor (F : Type -> Type) {fMap : Fmap F} : Prop :=
   { fmap_id : forall A, fmap (@id A) = id
   ; fmap_comp : forall A B C (f : A -> B) (g : B -> C),
       fmap (g ∘ f) = fmap g ∘ fmap f }.
+
+
+(** Contravariant functors *)
+Class Contramap (F : Type -> Type) : Type :=
+  contramap : forall {A B}, (A -> B) -> F B -> F A.
+
+Class ContraFunctor (F : Type -> Type) {contraMap : Contramap F} : Prop :=
+  { contramap_id : forall A, contramap (@id A) = id
+  ; contramap_comp : forall A B C (f : A -> B) (g : B -> C),
+      contramap (g ∘ f) = contramap f ∘ contramap g }.
 
 
 (** Bifunctors (covariant in both arguments)*)
@@ -109,8 +120,8 @@ Definition rmap {F : Type -> Type -> Type} `{Profunctor F}
   F A B -> F A C := dimap id g.
 
 
-(** A profunctor automatically induces a regular functor when the
-    first argument is fixed. *)
+(** A profunctor automatically induces a covariant monofunctor when
+    the first argument is fixed. *)
 Instance Fmap_dimap (F : Type -> Type -> Type) `{Dimap F} A
   : Fmap (F A) := fun _ _ => dimap id.
 
@@ -123,8 +134,25 @@ Proof.
     intros B C D f g.
     unfold fmap, Fmap_dimap.
     assert (Hid: @id A = id ∘ id) by auto.
-    rewrite Hid.
-    apply H.
+    rewrite Hid; apply H.
+Qed.
+
+
+(** A profunctor automatically induces a contravariant monofunctor
+    when the first argument is fixed. *)
+Instance Contramap_dimap (F : Type -> Type -> Type) `{Dimap F} A
+  : Contramap (flip F A) := fun _ _ => flip dimap id.
+
+Instance ContraFunctor_profunctor (F : Type -> Type -> Type) `{Profunctor F} A
+  : ContraFunctor (flip F A).
+Proof.
+  constructor.
+  - destruct H as [H _]; intros ?; apply H.
+  - destruct H as [_ H].
+    intros B C D f g.
+    unfold contramap, Contramap_dimap.
+    assert (Hid: @id A = id ∘ id) by auto.
+    rewrite Hid; apply H.
 Qed.
 
 
@@ -149,3 +177,18 @@ Instance Fmap_compose' F G `{Fmap F} `{fG : Fmap G}
   : Fmap (fun X => G (F X)) := Fmap_compose F G.
 Instance Functor_compose' F G `{Functor F} `{Functor G}
   : Functor (fun X => G (F X)) := Functor_compose F G.
+
+
+(* TODO: move somewhere *)
+(** Natural transformations. *)
+
+(* It should be the case that any such α is a natural transformation,
+   but I'm not sure that it's provable... *)
+Definition natural {F G} `{Functor F} `{Functor G}
+           (α : forall X, F X -> G X) :=
+  forall A B (f : A -> B), fmap f ∘ α A = α B ∘ fmap f.
+
+Record natural_transformation
+       (F G : Type -> Type) `{Functor F} `{Functor G} :=
+  { nat_app :> forall A, F A -> G A
+  ; nat_pf : natural nat_app }.

@@ -1,7 +1,8 @@
 Require Import Coq.Program.Basics.
 Require Import FunctionalExtensionality.
 Require Import List.
-Require Import functor monad monoid.
+Require Export functor.
+Require Import monad monoid.
 
 (** list is a covariant functor. *)
 Instance Fmap_list : Fmap list := map.
