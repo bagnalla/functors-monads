@@ -1,4 +1,7 @@
 .*.aux
+.Makefile.d
+Makefile
+Makefile.conf
 *.a
 *.cma
 *.cmi
@@ -15,6 +18,8 @@
 *.native
 *.o
 *.v.d
+*.vok
+*.vos
 *.vio
 *.vo
 .coq-native/

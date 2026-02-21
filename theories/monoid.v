@@ -27,10 +27,20 @@ Class Monoid (A : Type) `{Semigroup A} `{Mempty A} : Prop :=
 
 
 (** Example instances for nat. *)
-Require Import NArith.
+Require Import Arith.
 Instance Mappend_nat : Mappend nat := Nat.add.
 Instance Semigroup_nat : Semigroup nat.
-Proof. firstorder. Qed.
+Proof.
+  constructor.
+  intros x y z.
+  change ((x + y) + z = x + (y + z)).
+  symmetry.
+  apply Nat.add_assoc.
+Qed.
 Instance Mempty_nat : Mempty nat := O.
 Instance Monoid_nat : Monoid nat.
-Proof. firstorder. Qed.
+Proof.
+  constructor; intro x.
+  - apply Nat.add_0_l.
+  - apply Nat.add_0_r.
+Qed.
