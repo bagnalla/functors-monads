@@ -1,4 +1,5 @@
 Require Import Coq.Program.Basics.
+Require Import FunctionalExtensionality.
 Require Export functor.
 Require Import monad reader prod.
 
@@ -25,10 +26,28 @@ Instance Join_state S : Join (state S) :=
 Instance Jmonad_state S : Jmonad (state S).
 Proof.
   constructor; try solve [firstorder].
-  - admit.
-  - admit.
-  - admit.
-Admitted.
+  - intros A m.
+    apply functional_extensionality; intro s.
+    cbv [state join Join_state ret Return_state
+         fmap Fmap_compose Fmap_compose' Fmap_reader Fmap_bimap2
+         bimap Bimap_prod compose apply flip].
+    destruct (m s) as [x s']; reflexivity.
+  - intros A m.
+    apply functional_extensionality; intro s.
+    cbv [state join Join_state
+         fmap Fmap_compose Fmap_compose' Fmap_reader Fmap_bimap2
+         bimap Bimap_prod compose apply flip].
+    destruct (m s) as [g s'].
+    destruct (g s') as [x s'']; reflexivity.
+  - intros A B f.
+    apply functional_extensionality; intro m.
+    apply functional_extensionality; intro s.
+    cbv [state join Join_state
+         fmap Fmap_compose Fmap_compose' Fmap_reader Fmap_bimap2
+         bimap Bimap_prod compose apply flip].
+    destruct (m s) as [g s'].
+    destruct (g s') as [x s'']; reflexivity.
+Qed.
 
 Instance Monad_state S : Monad (state S) := _.
 
