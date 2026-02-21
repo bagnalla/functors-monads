@@ -1,6 +1,6 @@
 Require Import Coq.Program.Basics.
 Require Export functor.
-Require Import monad reader.
+Require Import monad reader prod.
 
 
 (** The state functor is the composition of the reader and flipped

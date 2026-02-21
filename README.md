@@ -2,6 +2,23 @@
 
 **Functors** and **monads from adjunctions**.
 
+## Building
+
+This repository treats `Makefile` and `Makefile.conf` as generated files.
+From the project root, regenerate and build with:
+
+```bash
+coq_makefile -f _CoqProject -o Makefile
+make -j"$(nproc)"
+```
+
+Useful checks:
+
+```bash
+coqc -Q . functors_monads test.v
+make validate
+```
+
 * theories/functor.v - functor / bifunctor classes.
 
 * theories/adjunction.v - adjunction classes.

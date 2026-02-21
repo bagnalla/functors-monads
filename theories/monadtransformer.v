@@ -42,10 +42,10 @@ Open Scope functor_scope.
 
 
 Class TransReturn (T : (Type -> Type) -> Type -> Type) : Type :=
-  transRet :> forall M `{Monad M}, Return (T M).
+  transRet :: forall M `{Monad M}, Return (T M).
 
 Class TransBind (T : (Type -> Type) -> Type -> Type) : Type :=
-  transBind :> forall M `{Monad M}, Bind (T M).
+  transBind :: forall M `{Monad M}, Bind (T M).
 
 Class MonadLift (T : (Type -> Type) -> Type -> Type) : Type :=
   monadLift : forall {M} `{Monad M} {A}, M A -> T M A.
